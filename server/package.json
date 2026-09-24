@@ -1,0 +1,21 @@
+{
+  "name": "tds-kit-server",
+  "version": "1.0.0",
+  "description": "Node.js + Express + WebSocket + MongoDB backend for TDS Kit Visualizer",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "simulate": "node scripts/simulate_esp32.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
