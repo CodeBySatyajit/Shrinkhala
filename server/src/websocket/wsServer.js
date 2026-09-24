@@ -2,18 +2,22 @@ const { WebSocketServer, WebSocket } = require('ws');
 const Event = require('../models/Event');
 const { getDBStatus } = require('../config/db');
 
-// In-memory state and event history (acts as fast cache & fallback if DB is offline)
+// In-memory state and event history
 const inMemoryEvents = [];
 const MAX_IN_MEMORY_EVENTS = 100;
 
 let currentStructure = 'stack';
 let currentItems = [];
 
-// Track connected clients
-const clients = new Set();
+// Track connected clients with metadata
+const clients = new Map(); // ws => { ip, isEsp32, connectedAt }
+
+// Server-side simulator state
+let simulatorTimer = null;
+let simulatorStep = 0;
 
 /**
- * Initialize WebSocket server attached to HTTP server or standalone
+ * Initialize WebSocket server
  */
 const initWebSocket = (server) => {
   const wss = new WebSocketServer({ server });
@@ -21,18 +25,25 @@ const initWebSocket = (server) => {
   console.log('[WebSocket] Server initialized and listening for connections');
 
   wss.on('connection', (ws, req) => {
-    const clientIp = req.socket.remoteAddress;
-    const url = req.url;
-    clients.add(ws);
+    const clientIp = req.socket.remoteAddress?.replace('::ffff:', '') || '127.0.0.1';
+    const isEsp32Query = req.url.includes('client=esp32') || req.headers['user-agent']?.includes('ESP32');
 
-    console.log(`[WebSocket] New client connected from ${clientIp} (path: ${url}). Total active clients: ${clients.size}`);
+    clients.set(ws, {
+      ip: clientIp,
+      isEsp32: Boolean(isEsp32Query),
+      connectedAt: new Date().toISOString()
+    });
 
-    // Send initial handshake state to newly connected client
+    console.log(`[WebSocket] New client connected from ${clientIp} (ESP32: ${isEsp32Query}). Total active: ${clients.size}`);
+
+    // Initial handshake
     const initMessage = JSON.stringify({
       type: 'connection_ack',
       message: 'Connected to TDS Kit Relay Server',
       currentStructure,
       currentItems,
+      activeClients: clients.size,
+      hasEsp32Connected: Array.from(clients.values()).some((c) => c.isEsp32),
       timestamp: new Date().toISOString()
     });
 
@@ -46,12 +57,21 @@ const initWebSocket = (server) => {
       ws.isAlive = true;
     });
 
-    // Handle incoming messages (from ESP32, browser clients, or simulation script)
+    // Handle messages
     ws.on('message', async (data) => {
       let rawString = '';
       try {
         rawString = data.toString();
         const parsed = JSON.parse(rawString);
+
+        // If client sends event from hardware, mark this socket as ESP32
+        const meta = clients.get(ws);
+        if (meta && !meta.isEsp32) {
+          if (parsed.source === 'ESP32' || parsed.client === 'esp32' || req.url.includes('esp32')) {
+            meta.isEsp32 = true;
+            broadcastDeviceStatus();
+          }
+        }
 
         await handleIncomingEvent(parsed, ws);
       } catch (err) {
@@ -61,7 +81,8 @@ const initWebSocket = (server) => {
 
     ws.on('close', (code, reason) => {
       clients.delete(ws);
-      console.log(`[WebSocket] Client disconnected (${code} - ${reason || 'No reason'}). Total active: ${clients.size}`);
+      console.log(`[WebSocket] Client disconnected (${code}). Total active: ${clients.size}`);
+      broadcastDeviceStatus();
     });
 
     ws.on('error', (err) => {
@@ -70,17 +91,16 @@ const initWebSocket = (server) => {
     });
   });
 
-  // Keep-alive heartbeat interval (every 30 seconds)
+  // Keep-alive heartbeat interval (every 25 seconds)
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws) => {
       if (ws.isAlive === false) {
-        console.log('[WebSocket] Terminating inactive client connection');
         return ws.terminate();
       }
       ws.isAlive = false;
       ws.ping();
     });
-  }, 30000);
+  }, 25000);
 
   wss.on('close', () => {
     clearInterval(heartbeatInterval);
@@ -90,30 +110,39 @@ const initWebSocket = (server) => {
 };
 
 /**
- * Process incoming event from ESP32 or client
+ * Broadcast device status update to all connected clients
+ */
+const broadcastDeviceStatus = () => {
+  const devices = getConnectedDevices();
+  broadcast(JSON.stringify({
+    type: 'devices_update',
+    totalClients: devices.totalClients,
+    esp32Clients: devices.esp32Count,
+    devices: devices.list
+  }));
+};
+
+/**
+ * Process incoming event
  */
 const handleIncomingEvent = async (event, sourceSocket = null) => {
   if (!event || !event.type) {
-    console.warn('[WebSocket] Received event without type:', event);
     return null;
   }
 
   const timestamp = event.timestamp ? new Date(event.timestamp) : new Date();
 
-  // Update current structure mode if specified
   if (event.type === 'structure' && event.structure) {
     currentStructure = event.structure;
   } else if (event.structure) {
     currentStructure = event.structure;
   }
 
-  // Update state tracking
   updateCurrentItems(event);
 
-  // Normalize event object matching MongoDB schema
   const normalizedEvent = {
     type: event.type,
-    id: event.id !== undefined ? String(event.id) : null,
+    id: event.id !== undefined && event.id !== null ? String(event.id) : null,
     after: event.after !== undefined ? (event.after === null ? null : String(event.after)) : null,
     structure: event.structure || currentStructure,
     timestamp: timestamp
@@ -123,7 +152,7 @@ const handleIncomingEvent = async (event, sourceSocket = null) => {
     normalizedEvent.items = event.items;
   }
 
-  // 1. Log to in-memory history
+  // 1. In-memory buffer
   inMemoryEvents.push({
     ...normalizedEvent,
     timestamp: timestamp.toISOString(),
@@ -133,7 +162,7 @@ const handleIncomingEvent = async (event, sourceSocket = null) => {
     inMemoryEvents.shift();
   }
 
-  // 2. Persist to MongoDB (if connected)
+  // 2. Persist to MongoDB
   const dbStatus = getDBStatus();
   if (dbStatus.connected) {
     try {
@@ -150,17 +179,12 @@ const handleIncomingEvent = async (event, sourceSocket = null) => {
     }
   }
 
-  // 3. Re-broadcast event to all connected clients
-  const payloadToBroadcast = JSON.stringify(normalizedEvent);
-  broadcast(payloadToBroadcast);
+  // 3. Re-broadcast to all connected clients
+  broadcast(JSON.stringify(normalizedEvent));
 
-  console.log(`[Relay -> Broadcast] Event '${normalizedEvent.type}' (${normalizedEvent.structure}) id:${normalizedEvent.id || 'N/A'}`);
   return normalizedEvent;
 };
 
-/**
- * Update in-memory data structure items according to the event
- */
 function updateCurrentItems(event) {
   if (event.type === 'snapshot' && Array.isArray(event.items)) {
     currentItems = [...event.items];
@@ -179,7 +203,6 @@ function updateCurrentItems(event) {
     if (event.id) {
       const newItem = { id: String(event.id) };
       if (!event.after) {
-        // Insert at head
         currentItems.unshift(newItem);
       } else {
         const idx = currentItems.findIndex((it) => String(it.id) === String(event.after));
@@ -197,32 +220,81 @@ function updateCurrentItems(event) {
   }
 }
 
-/**
- * Broadcast string message to all connected clients
- */
 const broadcast = (message) => {
-  clients.forEach((client) => {
+  for (const client of clients.keys()) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
-  });
+  }
 };
 
 /**
- * Retrieve in-memory events
+ * Built-in server simulator stream
  */
-const getInMemoryEvents = () => [...inMemoryEvents];
+const simulationSteps = [
+  { type: 'structure', structure: 'stack' },
+  { type: 'push', id: '10' },
+  { type: 'push', id: '20' },
+  { type: 'push', id: '30' },
+  { type: 'pop' },
+  { type: 'push', id: '40' },
+  { type: 'structure', structure: 'queue' },
+  { type: 'snapshot', structure: 'queue', items: [{ id: 'A1' }, { id: 'B2' }] },
+  { type: 'enqueue', id: 'C3' },
+  { type: 'dequeue' },
+  { type: 'enqueue', id: 'D4' },
+  { type: 'structure', structure: 'list' },
+  { type: 'insert', id: 'N1', after: null },
+  { type: 'insert', id: 'N2', after: 'N1' },
+  { type: 'insert', id: 'MID', after: 'N1' },
+  { type: 'remove', id: 'N1' }
+];
 
-const resetState = () => {
-  currentItems = [];
-  currentStructure = 'stack';
+const startSimulatorStream = (intervalMs = 2200) => {
+  if (simulatorTimer) return;
+
+  simulatorTimer = setInterval(async () => {
+    const step = simulationSteps[simulatorStep % simulationSteps.length];
+    simulatorStep++;
+
+    await handleIncomingEvent({
+      ...step,
+      source: 'ESP32 (Simulated)'
+    });
+  }, intervalMs);
+
+  console.log(`[Simulator] In-process ESP32 simulator started (interval: ${intervalMs}ms)`);
+};
+
+const stopSimulatorStream = () => {
+  if (simulatorTimer) {
+    clearInterval(simulatorTimer);
+    simulatorTimer = null;
+    console.log('[Simulator] In-process ESP32 simulator stopped');
+  }
+};
+
+const isSimulatorActive = () => simulatorTimer !== null;
+
+const getConnectedDevices = () => {
+  const list = Array.from(clients.values());
+  const esp32Count = list.filter((c) => c.isEsp32).length;
+  return {
+    totalClients: clients.size,
+    esp32Count,
+    list
+  };
 };
 
 module.exports = {
   initWebSocket,
   handleIncomingEvent,
   broadcast,
-  getInMemoryEvents,
-  resetState,
-  getClientCount: () => clients.size
+  getInMemoryEvents: () => [...inMemoryEvents],
+  resetState: () => { currentItems = []; currentStructure = 'stack'; },
+  getClientCount: () => clients.size,
+  getConnectedDevices,
+  startSimulatorStream,
+  stopSimulatorStream,
+  isSimulatorActive
 };

@@ -5,6 +5,7 @@ import { DemoControls } from './components/DemoControls';
 import { EventLogPanel } from './components/EventLogPanel';
 import { HistoryModal } from './components/HistoryModal';
 import { HardwareGuideModal } from './components/HardwareGuideModal';
+import { Esp32WifiModal } from './components/Esp32WifiModal';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useDataStructure } from './hooks/useDataStructure';
 
@@ -31,6 +32,8 @@ export function App() {
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isWifiModalOpen, setIsWifiModalOpen] = useState(false);
+  const [esp32Connected, setEsp32Connected] = useState(false);
 
   // Handle incoming WebSocket messages from the backend relay server
   useEffect(() => {
@@ -43,6 +46,15 @@ export function App() {
       if (event.currentStructure) {
         setStructure(event.currentStructure);
       }
+      if (event.hasEsp32Connected) {
+        setEsp32Connected(true);
+      }
+      return;
+    }
+
+    // Devices status update from server
+    if (event.type === 'devices_update') {
+      setEsp32Connected(Boolean(event.esp32Clients > 0));
       return;
     }
 
@@ -59,6 +71,8 @@ export function App() {
         onReconnect={reconnectWs}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenWifiModal={() => setIsWifiModalOpen(true)}
+        esp32Connected={esp32Connected}
       />
 
       {/* Main Content Area */}
@@ -101,6 +115,10 @@ export function App() {
       </footer>
 
       {/* Modals */}
+      <Esp32WifiModal
+        isOpen={isWifiModalOpen}
+        onClose={() => setIsWifiModalOpen(false)}
+      />
       <HistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
