@@ -184,12 +184,22 @@ export const useDataStructure = (initialStructure = 'stack') => {
 
         setItems((prev) => {
           let updated = [...prev];
-          if (!afterVal) {
-            // Insert at head
+          
+          if (afterVal === 'tail') {
+            // Explicitly append to end of list
+            updated = [...prev, newItem];
+            setLastAction({
+              type: 'insert',
+              description: `INSERT: Node '${val}' appended at TAIL (End of list)`,
+              timestamp: now
+            });
+          } else if (afterVal === 'head' || afterVal === null || afterVal === '') {
+            // In classic CS linked lists, after: null inserts before head (new head)
+            // But if user specifically selects head, it's clear
             updated = [newItem, ...prev];
             setLastAction({
               type: 'insert',
-              description: `INSERT: Node '${val}' inserted at HEAD`,
+              description: `INSERT: Node '${val}' inserted at HEAD (Start of list)`,
               timestamp: now
             });
           } else {

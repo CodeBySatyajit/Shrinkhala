@@ -67,18 +67,33 @@ export const DemoControls = ({
   };
 
   // Linked List Actions
-  const handleInsert = () => {
+  const [insertPosition, setInsertPosition] = useState('tail'); // 'tail' | 'head' | 'after'
+  const [selectedAfterNode, setSelectedAfterNode] = useState('');
+  const [removeTarget, setRemoveTarget] = useState('');
+
+  const handleInsert = (forcedPosition = null) => {
     const val = elementId.trim() || getNextDefaultId();
-    const afterVal = insertAfter.trim() ? insertAfter.trim() : null;
+    const pos = forcedPosition || insertPosition;
+
+    let afterVal = null;
+    if (pos === 'tail') {
+      afterVal = 'tail';
+    } else if (pos === 'head') {
+      afterVal = 'head';
+    } else if (pos === 'after') {
+      afterVal = selectedAfterNode || (items.length > 0 ? items[items.length - 1].id : null);
+    }
+
     triggerEvent({ type: 'insert', id: val, after: afterVal });
     setElementId('');
   };
 
   const handleRemove = (targetId = null) => {
-    const val = targetId || elementId.trim() || (items.length > 0 ? items[items.length - 1].id : null);
+    const val = targetId || removeTarget || elementId.trim() || (items.length > 0 ? items[items.length - 1].id : null);
     if (val) {
       triggerEvent({ type: 'remove', id: val });
       setElementId('');
+      setRemoveTarget('');
     }
   };
 
@@ -220,17 +235,36 @@ export const DemoControls = ({
         </div>
 
         {structure === 'list' && (
-          <div>
-            <label className="block text-[11px] font-mono text-slate-400 mb-1 uppercase tracking-wider">
-              Insert After (Node ID or leave blank for HEAD)
+          <div className="flex flex-col gap-1.5">
+            <label className="block text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+              Insert Position (Where to add?)
             </label>
-            <input
-              type="text"
-              value={insertAfter}
-              onChange={(e) => setInsertAfter(e.target.value)}
-              placeholder="e.g. NULL (Head) or B2"
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 font-mono"
-            />
+            <div className="flex gap-1.5">
+              <select
+                value={insertPosition}
+                onChange={(e) => setInsertPosition(e.target.value)}
+                className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500"
+              >
+                <option value="tail">At TAIL (End of list)</option>
+                <option value="head">At HEAD (Start of list)</option>
+                <option value="after">After specific node...</option>
+              </select>
+
+              {insertPosition === 'after' && (
+                <select
+                  value={selectedAfterNode}
+                  onChange={(e) => setSelectedAfterNode(e.target.value)}
+                  className="w-28 bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">(Select)</option>
+                  {items.map((it) => (
+                    <option key={it.uid || it.id} value={it.id}>
+                      Node {it.id}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         )}
 
@@ -301,16 +335,38 @@ export const DemoControls = ({
         {structure === 'list' && (
           <>
             <button
-              onClick={handleInsert}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/20 active:scale-98"
+              onClick={() => handleInsert('tail')}
+              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/20 active:scale-98"
+              title="Append node to the end (Tail) of the list"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
-              INSERT
+              INSERT AT TAIL (End)
             </button>
+
+            <button
+              onClick={() => handleInsert('head')}
+              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-98"
+              title="Prepend node to the start (Head) of the list"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              INSERT AT HEAD (Start)
+            </button>
+
+            {insertPosition === 'after' && (
+              <button
+                onClick={() => handleInsert('after')}
+                className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-fuchsia-600/20 active:scale-98"
+                title={`Insert after selected node`}
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                INSERT AFTER {selectedAfterNode || 'NODE'}
+              </button>
+            )}
+
             <button
               onClick={() => handleRemove()}
               disabled={items.length === 0}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+              className="min-w-[100px] flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-3 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
             >
               <Minus className="w-4 h-4 stroke-[3]" />
               REMOVE

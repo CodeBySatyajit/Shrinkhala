@@ -202,7 +202,9 @@ function updateCurrentItems(event) {
   } else if (event.type === 'insert') {
     if (event.id) {
       const newItem = { id: String(event.id) };
-      if (!event.after) {
+      if (event.after === 'tail') {
+        currentItems.push(newItem);
+      } else if (!event.after || event.after === 'head') {
         currentItems.unshift(newItem);
       } else {
         const idx = currentItems.findIndex((it) => String(it.id) === String(event.after));

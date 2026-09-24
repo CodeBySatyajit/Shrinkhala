@@ -38,6 +38,7 @@ export const LinkedListView = ({ items, activeHighlightId }) => {
           {/* Linked List Nodes */}
           {items.map((node, index) => {
             const isHead = index === 0;
+            const isTail = index === items.length - 1;
             const isHighlighted = activeHighlightId === node.id;
 
             return (
@@ -45,17 +46,35 @@ export const LinkedListView = ({ items, activeHighlightId }) => {
                 {/* Visual Node Box: Data section | Next Pointer section */}
                 <div
                   className={`
-                    flex-shrink-0 flex items-stretch rounded-2xl overflow-hidden border shadow-lg transition-all duration-300
+                    relative flex-shrink-0 flex items-stretch rounded-2xl overflow-hidden border shadow-lg transition-all duration-300
                     ${isHead
-                      ? 'border-purple-500/80 bg-slate-900 shadow-purple-500/10'
+                      ? 'border-purple-500/90 bg-slate-900 shadow-purple-500/15 ring-2 ring-purple-500/40'
+                      : isTail
+                      ? 'border-indigo-500/90 bg-slate-900 shadow-indigo-500/15'
                       : 'border-slate-700 bg-slate-900/90 hover:border-slate-600'}
                     ${node.isEntering ? 'animate-slide-in-right ring-4 ring-emerald-400 scale-105' : ''}
                     ${node.isExiting ? 'animate-slide-out-left opacity-0 scale-75 ring-4 ring-rose-500' : ''}
                     ${isHighlighted ? 'ring-4 ring-amber-400 scale-105 shadow-amber-500/40' : ''}
                   `}
                 >
+                  {/* Position Badge: HEAD / TAIL indicator */}
+                  {(isHead || isTail) && (
+                    <div className="absolute top-1 left-2 flex gap-1 z-10">
+                      {isHead && (
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-500/40 text-purple-200 border border-purple-400/50">
+                          HEAD
+                        </span>
+                      )}
+                      {isTail && (
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/40 text-indigo-200 border border-indigo-400/50">
+                          TAIL
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {/* Data Compartment */}
-                  <div className="px-4 py-3 min-w-[70px] flex flex-col items-center justify-center bg-slate-800/80">
+                  <div className="px-4 pt-5 pb-3 min-w-[76px] flex flex-col items-center justify-center bg-slate-800/80">
                     <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">
                       data
                     </span>
@@ -65,7 +84,7 @@ export const LinkedListView = ({ items, activeHighlightId }) => {
                   </div>
 
                   {/* Next Pointer Compartment */}
-                  <div className="px-3 py-3 flex flex-col items-center justify-center bg-slate-950/80 border-l border-slate-700/60">
+                  <div className="px-3 pt-5 pb-3 flex flex-col items-center justify-center bg-slate-950/80 border-l border-slate-700/60">
                     <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-0.5">
                       next
                     </span>
