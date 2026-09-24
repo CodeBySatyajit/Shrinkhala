@@ -81,6 +81,7 @@ export function App() {
         <section className="w-full">
           <VisualizerContainer
             structure={structure}
+            onSetStructure={setStructure}
             items={items}
             activeHighlightId={activeHighlightId}
             lastAction={lastAction}

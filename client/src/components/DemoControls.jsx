@@ -26,14 +26,14 @@ export const DemoControls = ({
   const [relayThroughServer, setRelayThroughServer] = useState(true);
   const [isPlayingAutoDemo, setIsPlayingAutoDemo] = useState(false);
 
-  // Helper to trigger an event either locally or through backend relay
+  // Helper to trigger an event with instant local feedback + WebSocket relay
   const triggerEvent = (event) => {
+    // 1. Always process locally with zero delay
+    onProcessEvent(event, 'Demo (Client)');
+
+    // 2. Also relay to server if connected
     if (relayThroughServer && isWsConnected && onSendOverWebSocket) {
-      // Send over WebSocket so it goes ESP32-style through Express -> MongoDB -> Browser
       onSendOverWebSocket(event);
-    } else {
-      // Direct local simulation
-      onProcessEvent(event, 'Demo (Client)');
     }
   };
 
@@ -99,7 +99,11 @@ export const DemoControls = ({
 
   // Switch structure mode
   const handleSwitchMode = (mode) => {
-    triggerEvent({ type: 'structure', structure: mode });
+    onSetStructure(mode);
+    onProcessEvent({ type: 'structure', structure: mode }, 'UI Mode Switch');
+    if (isWsConnected && onSendOverWebSocket) {
+      onSendOverWebSocket({ type: 'structure', structure: mode });
+    }
   };
 
   // Load preset snapshot
@@ -175,8 +179,9 @@ export const DemoControls = ({
         {/* Structure Mode Switcher Buttons */}
         <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button
+            type="button"
             onClick={() => handleSwitchMode('stack')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition select-none ${
               structure === 'stack'
                 ? 'bg-sky-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -187,8 +192,9 @@ export const DemoControls = ({
           </button>
 
           <button
+            type="button"
             onClick={() => handleSwitchMode('queue')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition select-none ${
               structure === 'queue'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -199,8 +205,9 @@ export const DemoControls = ({
           </button>
 
           <button
+            type="button"
             onClick={() => handleSwitchMode('list')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition select-none ${
               structure === 'list'
                 ? 'bg-purple-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
