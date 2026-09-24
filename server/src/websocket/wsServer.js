@@ -179,8 +179,8 @@ const handleIncomingEvent = async (event, sourceSocket = null) => {
     }
   }
 
-  // 3. Re-broadcast to all connected clients
-  broadcast(JSON.stringify(normalizedEvent));
+  // 3. Re-broadcast to all connected clients (except sender if from browser)
+  broadcast(JSON.stringify(normalizedEvent), sourceSocket);
 
   return normalizedEvent;
 };
@@ -222,9 +222,9 @@ function updateCurrentItems(event) {
   }
 }
 
-const broadcast = (message) => {
+const broadcast = (message, excludeSocket = null) => {
   for (const client of clients.keys()) {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client !== excludeSocket && client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
   }

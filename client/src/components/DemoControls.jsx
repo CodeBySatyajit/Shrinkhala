@@ -302,16 +302,18 @@ export const DemoControls = ({
         {structure === 'stack' && (
           <>
             <button
+              type="button"
               onClick={handlePush}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-sky-600/20 active:scale-98"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-sky-600/20 active:scale-98 cursor-pointer select-none"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               PUSH
             </button>
             <button
+              type="button"
               onClick={handlePop}
               disabled={items.length === 0}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none"
             >
               <Minus className="w-4 h-4 stroke-[3]" />
               POP
@@ -322,16 +324,18 @@ export const DemoControls = ({
         {structure === 'queue' && (
           <>
             <button
+              type="button"
               onClick={handleEnqueue}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/20 active:scale-98"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/20 active:scale-98 cursor-pointer select-none"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               ENQUEUE (Rear)
             </button>
             <button
+              type="button"
               onClick={handleDequeue}
               disabled={items.length === 0}
-              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none"
             >
               <Minus className="w-4 h-4 stroke-[3]" />
               DEQUEUE (Front)
@@ -342,8 +346,9 @@ export const DemoControls = ({
         {structure === 'list' && (
           <>
             <button
+              type="button"
               onClick={() => handleInsert('tail')}
-              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/20 active:scale-98"
+              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/20 active:scale-98 cursor-pointer select-none"
               title="Append node to the end (Tail) of the list"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -351,8 +356,9 @@ export const DemoControls = ({
             </button>
 
             <button
+              type="button"
               onClick={() => handleInsert('head')}
-              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-98"
+              className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-98 cursor-pointer select-none"
               title="Prepend node to the start (Head) of the list"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -361,8 +367,9 @@ export const DemoControls = ({
 
             {insertPosition === 'after' && (
               <button
+                type="button"
                 onClick={() => handleInsert('after')}
-                className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-fuchsia-600/20 active:scale-98"
+                className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-fuchsia-600/20 active:scale-98 cursor-pointer select-none"
                 title={`Insert after selected node`}
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
@@ -371,9 +378,10 @@ export const DemoControls = ({
             )}
 
             <button
+              type="button"
               onClick={() => handleRemove()}
               disabled={items.length === 0}
-              className="min-w-[100px] flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-3 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+              className="min-w-[100px] flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-3 py-2.5 rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-98 disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none"
             >
               <Minus className="w-4 h-4 stroke-[3]" />
               REMOVE
@@ -383,8 +391,9 @@ export const DemoControls = ({
 
         {/* Snapshot Preset */}
         <button
+          type="button"
           onClick={handleLoadSnapshot}
-          className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition"
+          className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer select-none"
           title="Load snapshot preset"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -393,9 +402,10 @@ export const DemoControls = ({
 
         {/* Auto Scenario */}
         <button
+          type="button"
           onClick={runAutoDemo}
           disabled={isPlayingAutoDemo}
-          className="flex items-center gap-1.5 px-3 py-2.5 bg-indigo-900/60 hover:bg-indigo-800/80 border border-indigo-700/60 text-indigo-200 text-xs font-semibold rounded-xl transition disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-2.5 bg-indigo-900/60 hover:bg-indigo-800/80 border border-indigo-700/60 text-indigo-200 text-xs font-semibold rounded-xl transition disabled:opacity-50 cursor-pointer select-none"
           title="Play automated event sequence"
         >
           <Play className={`w-3.5 h-3.5 ${isPlayingAutoDemo ? 'animate-spin' : ''}`} />
@@ -404,8 +414,9 @@ export const DemoControls = ({
 
         {/* Reset / Clear */}
         <button
+          type="button"
           onClick={onClear}
-          className="p-2.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 border border-slate-800 rounded-xl transition"
+          className="p-2.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 border border-slate-800 rounded-xl transition cursor-pointer select-none"
           title="Clear all nodes"
         >
           <RotateCcw className="w-4 h-4" />
