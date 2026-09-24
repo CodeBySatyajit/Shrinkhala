@@ -5,11 +5,7 @@ const generateUid = (id) => `node_${id}_${Date.now()}_${++uidCounter}`;
 
 export const useDataStructure = (initialStructure = 'stack') => {
   const [structure, setStructure] = useState(initialStructure); // 'stack' | 'queue' | 'list'
-  const [items, setItems] = useState([
-    { id: '10', uid: generateUid('10') },
-    { id: '20', uid: generateUid('20') },
-    { id: '30', uid: generateUid('30') }
-  ]);
+  const [items, setItems] = useState([]);
   const [lastAction, setLastAction] = useState({
     type: 'init',
     description: 'System ready',

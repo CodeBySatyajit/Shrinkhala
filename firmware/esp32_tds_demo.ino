@@ -80,8 +80,8 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     case WStype_CONNECTED:
       Serial.printf("[WS] Connected to relay at %s:%d%s\n", ws_server_ip, ws_server_port, ws_path);
       isWsConnected = true;
-      // Send initial hello snapshot
-      webSocket.sendTXT("{\"type\":\"snapshot\",\"structure\":\"stack\",\"items\":[{\"id\":\"HW1\"},{\"id\":\"HW2\"}]}");
+      // Announce ready state
+      webSocket.sendTXT("{\"type\":\"structure\",\"structure\":\"stack\"}");
       break;
     case WStype_TEXT:
       Serial.printf("[WS RX] %s\n", payload);
