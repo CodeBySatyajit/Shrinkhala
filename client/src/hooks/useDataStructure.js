@@ -265,7 +265,7 @@ export const useDataStructure = (initialStructure = 'stack') => {
       default:
         console.warn('Unknown event type:', event);
     }
-  }, [structure, items.length, addLog]);
+  }, [addLog]);
 
   const clearAll = useCallback(() => {
     setItems([]);

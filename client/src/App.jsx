@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { VisualizerContainer } from './components/VisualizerContainer';
 import { DemoControls } from './components/DemoControls';
@@ -35,19 +35,20 @@ export function App() {
   const [isWifiModalOpen, setIsWifiModalOpen] = useState(false);
   const [esp32Connected, setEsp32Connected] = useState(false);
 
-  // Handle incoming WebSocket messages from the backend relay server
+  // Handle incoming WebSocket messages from the backend relay server exactly once
+  const lastProcessedMessageRef = useRef(null);
+
   useEffect(() => {
-    if (!lastMessage || !lastMessage.data) return;
+    if (!lastMessage || !lastMessage.data || !lastMessage.receivedAt) return;
+    if (lastProcessedMessageRef.current === lastMessage.receivedAt) return;
+    lastProcessedMessageRef.current = lastMessage.receivedAt;
 
     const event = lastMessage.data;
 
     // Initial handshake from server
     if (event.type === 'connection_ack') {
-      if (event.currentStructure) {
-        setStructure(event.currentStructure);
-      }
-      if (event.hasEsp32Connected) {
-        setEsp32Connected(true);
+      if (event.hasEsp32Connected !== undefined) {
+        setEsp32Connected(Boolean(event.hasEsp32Connected));
       }
       return;
     }
@@ -59,8 +60,8 @@ export function App() {
     }
 
     // Process event as live event from ESP32/Relay server
-    processEvent(event, 'ESP32 (Relay)');
-  }, [lastMessage, processEvent, setStructure]);
+    processEvent(event, 'ESP32 (Hardware)');
+  }, [lastMessage, processEvent]);
 
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
@@ -119,6 +120,7 @@ export function App() {
       <Esp32WifiModal
         isOpen={isWifiModalOpen}
         onClose={() => setIsWifiModalOpen(false)}
+        esp32Connected={esp32Connected}
       />
       <HistoryModal
         isOpen={isHistoryOpen}

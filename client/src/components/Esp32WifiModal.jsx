@@ -15,7 +15,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 
-export const Esp32WifiModal = ({ isOpen, onClose }) => {
+export const Esp32WifiModal = ({ isOpen, onClose, esp32Connected }) => {
   const [networkInfo, setNetworkInfo] = useState(null);
   const [esp32Ip, setEsp32Ip] = useState('192.168.4.1');
   const [probeStatus, setProbeStatus] = useState(null); // { probing, success, message, latency }
@@ -120,9 +120,17 @@ export const Esp32WifiModal = ({ isOpen, onClose }) => {
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 Connect with ESP32 Wi-Fi
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  Ready
-                </span>
+                {esp32Connected ? (
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    ESP32 Online
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                    ESP32 Not Connected
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-slate-400">
                 Configure Wi-Fi link between ESP32 microcontroller & TDS Kit relay server
@@ -207,6 +215,26 @@ export const Esp32WifiModal = ({ isOpen, onClose }) => {
           {/* TAB 1: Wi-Fi Router Link */}
           {activeTab === 'wifi' && (
             <div className="space-y-4">
+              {esp32Connected ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-800/80 text-emerald-300 flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-xs text-white">ESP32 Hardware Connected & Online</p>
+                    <p className="text-[11px] text-emerald-300/80">Hardware is actively connected and ready to transmit events.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-xs text-white">ESP32 Hardware Not Connected Yet</p>
+                    <p className="text-[11px] text-slate-400">
+                      Follow the steps below to connect your ESP32, or test immediately using the <strong className="text-emerald-400">Tab 3: Instant Simulator</strong> or the buttons on the dashboard.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                 <h3 className="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center gap-2">
                   <Wifi className="w-4 h-4 text-sky-400" />

@@ -36,6 +36,8 @@ const initWebSocket = (server) => {
 
     console.log(`[WebSocket] New client connected from ${clientIp} (ESP32: ${isEsp32Query}). Total active: ${clients.size}`);
 
+    const hasEsp32 = Array.from(clients.values()).some((c) => c.isEsp32) || simulatorTimer !== null;
+
     // Initial handshake
     const initMessage = JSON.stringify({
       type: 'connection_ack',
@@ -43,7 +45,7 @@ const initWebSocket = (server) => {
       currentStructure,
       currentItems,
       activeClients: clients.size,
-      hasEsp32Connected: Array.from(clients.values()).some((c) => c.isEsp32),
+      hasEsp32Connected: hasEsp32,
       timestamp: new Date().toISOString()
     });
 
@@ -266,6 +268,7 @@ const startSimulatorStream = (intervalMs = 2200) => {
   }, intervalMs);
 
   console.log(`[Simulator] In-process ESP32 simulator started (interval: ${intervalMs}ms)`);
+  broadcastDeviceStatus();
 };
 
 const stopSimulatorStream = () => {
@@ -273,6 +276,7 @@ const stopSimulatorStream = () => {
     clearInterval(simulatorTimer);
     simulatorTimer = null;
     console.log('[Simulator] In-process ESP32 simulator stopped');
+    broadcastDeviceStatus();
   }
 };
 
@@ -280,9 +284,12 @@ const isSimulatorActive = () => simulatorTimer !== null;
 
 const getConnectedDevices = () => {
   const list = Array.from(clients.values());
-  const esp32Count = list.filter((c) => c.isEsp32).length;
+  let esp32Count = list.filter((c) => c.isEsp32).length;
+  if (simulatorTimer !== null) {
+    esp32Count += 1;
+  }
   return {
-    totalClients: clients.size,
+    totalClients: clients.size + (simulatorTimer !== null ? 1 : 0),
     esp32Count,
     list
   };

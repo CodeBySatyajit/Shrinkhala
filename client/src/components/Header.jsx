@@ -7,7 +7,8 @@ export const Header = ({
   onReconnect,
   onOpenHistory,
   onOpenHelp,
-  onOpenWifiModal
+  onOpenWifiModal,
+  esp32Connected
 }) => {
   return (
     <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-lg shadow-black/20">
@@ -19,7 +20,7 @@ export const Header = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-              <span>TDS Kit Visualizer</span>
+              <span>S h r i n k h a l a</span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
                 v1.0 Live
               </span>
@@ -35,42 +36,46 @@ export const Header = ({
       <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
         {/* Prominent 'Connect with ESP32 Wi-Fi' Button */}
         <button
+          type="button"
           onClick={onOpenWifiModal}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-600 via-indigo-600 to-sky-600 hover:from-sky-500 hover:to-indigo-500 border border-sky-400/40 transition shadow-lg shadow-sky-500/20 active:scale-98"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-600 via-indigo-600 to-sky-600 hover:from-sky-500 hover:to-indigo-500 border border-sky-400/40 transition shadow-lg shadow-sky-500/20 active:scale-98 cursor-pointer"
         >
-          <Wifi className="w-4 h-4 text-white animate-pulse" />
-          <span>Connect ESP32 Wi-Fi</span>
+          <Wifi className="w-4 h-4 text-white" />
+          <span>{esp32Connected ? 'ESP32 Wi-Fi Connected' : 'Connect ESP32 Wi-Fi'}</span>
         </button>
 
-        {/* WebSocket Connection Status Badge */}
+        {/* Real ESP32 Hardware Status Badge */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-900/90 text-xs font-mono shadow-sm">
-          {wsStatus === 'connected' ? (
+          {esp32Connected ? (
             <>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-emerald-400 font-semibold hidden sm:inline">
-                Relay Online
+              <span className="text-emerald-400 font-bold">
+                ESP32: Online
               </span>
-            </>
-          ) : wsStatus === 'connecting' ? (
-            <>
-              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span className="text-amber-400 font-semibold">Connecting...</span>
             </>
           ) : (
             <>
               <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-              <span className="text-rose-400 font-semibold">Offline</span>
+              <span className="text-rose-400 font-semibold">
+                ESP32: Not Connected
+              </span>
             </>
           )}
+        </div>
 
+        {/* Node.js Server Relay Indicator */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-800 bg-slate-950/70 text-[11px] font-mono text-slate-400">
+          <span className={`h-1.5 w-1.5 rounded-full ${wsStatus === 'connected' ? 'bg-sky-400' : 'bg-rose-500'}`}></span>
+          <span>Server Relay: {wsStatus === 'connected' ? 'Port 5000' : 'Offline'}</span>
           {wsStatus !== 'connected' && (
             <button
+              type="button"
               onClick={onReconnect}
-              title="Reconnect WebSocket"
-              className="ml-1 text-slate-400 hover:text-sky-300 transition"
+              title="Reconnect to server"
+              className="ml-1 text-slate-400 hover:text-sky-300"
             >
               <RefreshCw className="w-3 h-3" />
             </button>
